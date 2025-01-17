@@ -5,28 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Race Elevation Analyzer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .hero-section {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/images/trail-running.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+        .feature-card {
+            transition: transform 0.3s ease;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            font-size: 2rem;
+            color: #0d6efd;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="mb-4">Race Elevation Analyzer</h1>
-        
-        <% if (typeof error !== 'undefined') { %>
-            <div class="alert alert-danger" role="alert">
-                <%= error %>
+    <div class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 mb-3">Race Elevation Analyzer</h1>
+            <p class="lead mb-4">Plan your race strategy with detailed elevation insights and aid station analysis</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-md-4">
+                <div class="card feature-card mb-4">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line feature-icon"></i>
+                        <h5 class="card-title">Elevation Analysis</h5>
+                        <p class="card-text">Visualize your race course with interactive elevation profiles and detailed statistics.</p>
+                    </div>
+                </div>
             </div>
+            <div class="col-md-4">
+                <div class="card feature-card mb-4">
+                    <div class="card-body text-center">
+                        <i class="fas fa-map-marker-alt feature-icon"></i>
+                        <h5 class="card-title">Aid Station Planning</h5>
+                        <p class="card-text">Calculate distances and elevation changes between aid stations for better race planning.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card mb-4">
+                    <div class="card-body text-center">
+                        <i class="fas fa-route feature-icon"></i>
+                        <h5 class="card-title">Course Insights</h5>
+                        <p class="card-text">Support for out-and-back courses and automatic waypoint detection from GPX files.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <% if (typeof error !== 'undefined') { %>
+            <div class="alert alert-danger shadow-sm"><%= error %></div>
         <% } %>
         
-        <div class="card">
+        <div class="card shadow">
             <div class="card-body">
-                <h5 class="card-title">Upload GPX File</h5>
+                <h5 class="card-title mb-4">Get Started: Upload Your GPX File</h5>
+                <p class="text-muted mb-4">
+                    Upload your GPX file to analyze elevation profiles, plan aid station strategies, and understand your race course better. 
+                    Supports GPX files from most GPS devices and running platforms.
+                </p>
                 <form action="/upload" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label for="gpxFile" class="form-label">Choose GPX file</label>
-                        <input type="file" class="form-control" id="gpxFile" name="gpxFile" accept=".gpx">
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="gpxFile" name="gpxFile" accept=".gpx" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload
+                            </button>
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Supported format: GPX files (.gpx)
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Upload</button>
                 </form>
             </div>
+        </div>
+
+        <div class="mt-5 mb-4 text-center text-muted">
+            <p><small>
+                <i class="fab fa-github me-1"></i>
+                Have questions or issues? Visit the 
+                <a href="https://github.com/wadewegner/gpx-parser" target="_blank" rel="noopener noreferrer">GitHub repository</a>
+            </small></p>
         </div>
     </div>
 

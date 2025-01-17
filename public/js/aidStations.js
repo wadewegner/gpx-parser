@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function createAidStationInput(index) {
         const div = document.createElement('div');
-        div.className = 'row mb-3';
+        div.className = 'row mb-3 align-items-center';
         div.innerHTML = `
             <div class="col">
                 <input type="text" class="form-control" name="stations[${index}][name]" 
@@ -15,7 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     placeholder="Mile Marker" step="0.1" required>
             </div>
             <div class="col-auto">
-                <button type="button" class="btn btn-danger remove-station">Remove</button>
+                <button type="button" class="btn btn-danger remove-station">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         `;
         return div;
@@ -28,8 +30,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     aidStationInputs.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-station')) {
-            e.target.closest('.row').remove();
+        // Check if clicked element or its parent is the remove button
+        const removeButton = e.target.closest('.remove-station');
+        if (removeButton) {
+            removeButton.closest('.row').remove();
         }
     });
 
