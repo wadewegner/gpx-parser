@@ -33,18 +33,61 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Add first aid station input by default
-    addButton.click();
+    // Check for waypoints and pre-populate aid stations
+    const waypointsInput = document.getElementById('waypoints');
+    if (waypointsInput && waypointsInput.value) {
+        try {
+            const waypoints = JSON.parse(waypointsInput.value);
+            if (waypoints.length > 0) {
+                waypoints.forEach(waypoint => {
+                    const index = aidStationInputs.children.length;
+                    const newInput = createAidStationInput(index);
+                    aidStationInputs.appendChild(newInput);
+                    
+                    // Fill in the values
+                    const nameInput = newInput.querySelector(`input[name="stations[${index}][name]"]`);
+                    const mileInput = newInput.querySelector(`input[name="stations[${index}][mile]"]`);
+                    nameInput.value = waypoint.name;
+                    mileInput.value = waypoint.distance.toFixed(1);
+                });
+            } else {
+                // If no waypoints, add one empty aid station input
+                addButton.click();
+            }
+        } catch (e) {
+            console.error('Error parsing waypoints:', e);
+            addButton.click();
+        }
+    } else {
+        // If no waypoints, add one empty aid station input
+        addButton.click();
+    }
 
     const form = document.getElementById('aidStationsForm');
     
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const stations = Array.from(aidStationInputs.children).map((row, index) => ({
-            name: row.querySelector(`input[name="stations[${index}][name]"]`).value,
-            mile: parseFloat(row.querySelector(`input[name="stations[${index}][mile]"]`).value)
-        }));
+        // Get all aid station inputs that exist in the form
+        const stations = [];
+        const rows = Array.from(aidStationInputs.children);
+        
+        for (const row of rows) {
+            const nameInput = row.querySelector('input[type="text"]');
+            const mileInput = row.querySelector('input[type="number"]');
+            
+            if (nameInput && mileInput && nameInput.value && mileInput.value) {
+                stations.push({
+                    name: nameInput.value,
+                    mile: parseFloat(mileInput.value)
+                });
+            }
+        }
+        
+        if (stations.length === 0) {
+            alert('Please add at least one aid station');
+            return;
+        }
         
         try {
             const response = await fetch('/calculate', {

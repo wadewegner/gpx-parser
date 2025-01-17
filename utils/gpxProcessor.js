@@ -6,6 +6,7 @@ class GpxProcessor {
     constructor(gpxFilePath) {
         this.gpxFilePath = gpxFilePath;
         this.trackPoints = null;
+        this.waypoints = [];
     }
 
     async process() {
@@ -36,6 +37,65 @@ class GpxProcessor {
         }
         
         this.calculateDistances();
+
+        // Extract waypoints if they exist
+        let waypoints = geoJson.features
+            .filter(feature => feature.geometry.type === 'Point')
+            .map(feature => ({
+                name: feature.properties.name || 'Unnamed Waypoint',
+                coordinates: feature.geometry.coordinates,
+                distance: 0,
+                visits: []  // Store all potential visits
+            }));
+
+        // Calculate distances for waypoints
+        if (waypoints.length > 0) {
+            waypoints.forEach((waypoint) => {
+                const waypointCoord = waypoint.coordinates;
+                // Find all potential visits to this waypoint
+                this.trackPoints.forEach((point, index) => {
+                    const dist = this.calculateHaversineDistance(
+                        point.latitude, point.longitude,
+                        waypointCoord[1], waypointCoord[0]
+                    );
+                
+                    // If within 0.1 miles of the waypoint, consider it a visit
+                    if (dist < 0.1) {
+                        waypoint.visits.push({
+                            distance: point.distance,
+                            index: index
+                        });
+                    }
+                });
+                
+                delete waypoint.coordinates;
+            });
+
+            // Process visits to create multiple aid station entries if needed
+            this.waypoints = [];
+            waypoints.forEach(waypoint => {
+                // Sort visits by distance
+                waypoint.visits.sort((a, b) => a.distance - b.distance);
+                
+                // For each visit that's significantly different in distance
+                let lastDistance = -1;
+                waypoint.visits.forEach(visit => {
+                    // Only add if it's more than 5 miles from the last visit
+                    // (adjust this threshold based on your needs)
+                    if (lastDistance === -1 || (visit.distance - lastDistance) > 5) {
+                        this.waypoints.push({
+                            name: waypoint.name,
+                            distance: visit.distance
+                        });
+                        lastDistance = visit.distance;
+                    }
+                });
+            });
+            
+            // Sort all waypoints by distance
+            this.waypoints.sort((a, b) => a.distance - b.distance);
+        }
+
         return this;
     }
 
@@ -117,6 +177,10 @@ class GpxProcessor {
             distance: point.distance,
             elevation: point.elevation * 3.28084  // Convert to feet
         }));
+    }
+
+    getWaypoints() {
+        return this.waypoints;
     }
 }
 

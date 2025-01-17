@@ -41,10 +41,17 @@ app.post('/upload', upload.single('gpxFile'), async (req, res) => {
         if (!req.file) {
             throw new Error('No file uploaded');
         }
+        
+        // Process GPX file to extract waypoints
+        const processor = new GpxProcessor(path.join(__dirname, 'uploads', req.file.filename));
+        await processor.process();
+        const waypoints = processor.getWaypoints();
+        
         res.render('results', { 
             filename: req.file.originalname,
             tempFilename: req.file.filename,
-            message: 'File uploaded successfully'
+            message: 'File uploaded successfully',
+            waypoints: JSON.stringify(waypoints)  // Pass waypoints to the view
         });
     } catch (error) {
         res.render('index', { error: error.message });
