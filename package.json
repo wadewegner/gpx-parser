@@ -1,0 +1,30 @@
+{
+  "name": "race-elevation-analyzer",
+  "version": "1.0.0",
+  "description": "An application to analyze elevation changes between race aid stations using GPX files",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [
+    "gpx",
+    "elevation",
+    "race",
+    "analysis"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tmcw/togeojson": "^5.8.1",
+    "bootstrap": "^5.3.2",
+    "chart.js": "^4.4.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "xmldom": "^0.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Elevation Analysis Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Analysis Results</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">GPX File: <%= filename %></h5>
+                <p class="card-text"><%= message %></p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Aid Stations</h5>
+                <p class="text-muted mb-3">
+                    Enter your aid stations below. The start (0 miles) and finish will be automatically included.
+                </p>
+                <form id="aidStationsForm" class="mb-3">
+                    <input type="hidden" name="gpxFile" value="<%= filename %>">
+                    <input type="hidden" name="tempGpxFile" value="<%= tempFilename %>">
+                    <div id="aidStationInputs">
+                        <!-- Aid station inputs will be added here dynamically -->
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="addStation">Add Aid Station</button>
+                    <button type="submit" class="btn btn-primary">Calculate Elevation Data</button>
+                </form>
+            </div>
+        </div>
+
+        <a href="/" class="btn btn-outline-secondary">Upload Another File</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/aidStations.js"></script>
+</body>
+</html> 
