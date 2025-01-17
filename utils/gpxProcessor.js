@@ -3,10 +3,12 @@ const tj = require('@tmcw/togeojson');
 const { DOMParser } = require('xmldom');
 
 class GpxProcessor {
-    constructor(gpxContent) {
+    constructor(gpxContent, officialElevationGain = null) {
         this.trackPoints = null;
         this.waypoints = [];
         this.gpxContent = gpxContent;
+        this.officialElevationGain = officialElevationGain ? parseInt(officialElevationGain) : null;
+        this.normalizationFactor = 1;
     }
 
     async process() {
@@ -35,6 +37,7 @@ class GpxProcessor {
         }
         
         this.calculateDistances();
+        this.calculateNormalizationFactor();
 
         // Extract waypoints if they exist
         let waypoints = geoJson.features
@@ -164,8 +167,8 @@ class GpxProcessor {
         }
 
         return {
-            elevationGain: Math.round(elevationGain * 3.28084),
-            elevationLoss: Math.round(elevationLoss * 3.28084),
+            elevationGain: Math.round(this.normalizeElevation(elevationGain * 3.28084)),
+            elevationLoss: Math.round(this.normalizeElevation(elevationLoss * 3.28084)),
             distance: endMile - startMile
         };
     }
@@ -173,12 +176,30 @@ class GpxProcessor {
     getElevationProfile() {
         return this.trackPoints.map(point => ({
             distance: point.distance,
-            elevation: point.elevation * 3.28084  // Convert to feet
+            elevation: this.normalizeElevation(point.elevation * 3.28084)  // Convert to feet and normalize
         }));
     }
 
     getWaypoints() {
         return this.waypoints;
+    }
+
+    calculateNormalizationFactor() {
+        if (this.officialElevationGain) {
+            let totalGain = 0;
+            for (let i = 1; i < this.trackPoints.length; i++) {
+                const elevationDiff = this.trackPoints[i].elevation - this.trackPoints[i-1].elevation;
+                if (elevationDiff > 0) {
+                    totalGain += elevationDiff;
+                }
+            }
+            const calculatedTotalGain = totalGain * 3.28084; // Convert to feet
+            this.normalizationFactor = this.officialElevationGain / calculatedTotalGain;
+        }
+    }
+
+    normalizeElevation(value) {
+        return value * this.normalizationFactor;
     }
 }
 

@@ -54,10 +54,16 @@ app.post('/upload', upload.single('gpxFile'), async (req, res) => {
         
         // Generate unique ID for this GPX content
         const gpxId = crypto.randomBytes(16).toString('hex');
-        gpxStorage.set(gpxId, req.file.buffer.toString('utf8'));
+        gpxStorage.set(gpxId, {
+            content: req.file.buffer.toString('utf8'),
+            officialElevationGain: req.body.officialElevationGain || null
+        });
         
         // Process GPX file to extract waypoints
-        const processor = new GpxProcessor(req.file.buffer.toString('utf8'));
+        const processor = new GpxProcessor(
+            req.file.buffer.toString('utf8'),
+            req.body.officialElevationGain
+        );
         await processor.process();
         const waypoints = processor.getWaypoints();
         
@@ -76,8 +82,8 @@ app.post('/calculate', express.json(), async (req, res) => {
     try {
         const { gpxId, stations } = req.body;
         
-        const gpxContent = gpxStorage.get(gpxId);
-        if (!gpxContent) {
+        const gpxData = gpxStorage.get(gpxId);
+        if (!gpxData) {
             throw new Error('GPX content not found. Please try uploading the file again.');
         }
         
@@ -85,7 +91,7 @@ app.post('/calculate', express.json(), async (req, res) => {
         const sortedStations = stations.sort((a, b) => a.mile - b.mile);
         
         // Process GPX file
-        const processor = new GpxProcessor(gpxContent);
+        const processor = new GpxProcessor(gpxData.content, gpxData.officialElevationGain);
         await processor.process();
         
         // Get elevation profile data

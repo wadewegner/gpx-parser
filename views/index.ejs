@@ -86,17 +86,43 @@
                     Supports GPX files from most GPS devices and running platforms.
                 </p>
                 <form action="/upload" method="post" enctype="multipart/form-data">
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <div class="input-group">
-                            <input type="file" class="form-control" id="gpxFile" name="gpxFile" accept=".gpx" required>
+                            <input type="file" 
+                                   class="form-control" 
+                                   id="gpxFile" 
+                                   name="gpxFile" 
+                                   accept=".gpx" 
+                                   required>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-upload me-2"></i>Upload
                             </button>
                         </div>
-                        <div class="form-text mt-2">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Supported format: GPX files (.gpx)
+                    </div>
+                    <div class="row align-items-center mt-3">
+                        <div class="col-auto">
+                            <label for="officialElevationGain" class="form-label text-muted mb-0">
+                                <small>Official elevation gain (optional):</small>
+                            </label>
                         </div>
+                        <div class="col-auto">
+                            <input type="number" 
+                                   class="form-control form-control-sm" 
+                                   style="width: 150px;"
+                                   id="officialElevationGain"
+                                   name="officialElevationGain" 
+                                   placeholder="e.g. 11000"
+                                   aria-label="Official elevation gain in feet">
+                        </div>
+                        <div class="col-auto">
+                            <span class="form-text text-muted">
+                                <small>feet</small>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-text mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Upload your GPX file (.gpx) and optionally provide the official elevation gain to normalize calculations
                     </div>
                 </form>
             </div>
