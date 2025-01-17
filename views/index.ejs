@@ -98,31 +98,26 @@
                                 <i class="fas fa-upload me-2"></i>Upload
                             </button>
                         </div>
+                        <div class="form-text mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Enable smoothing below for more accurate elevation calculations
+                        </div>
                     </div>
                     <div class="row align-items-center mt-3">
-                        <div class="col-auto">
-                            <label for="officialElevationGain" class="form-label text-muted mb-0">
-                                <small>Official elevation gain (optional):</small>
-                            </label>
+                        <div class="col-12 mb-2">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="enableSmoothing" name="enableSmoothing">
+                                <label class="form-check-label" for="enableSmoothing">
+                                    <a href="https://github.com/Turfjs/turf/tree/master/packages/turf-simplify" 
+                                       target="_blank" 
+                                       rel="noopener noreferrer" 
+                                       class="text-decoration-none">
+                                        Enable GPX smoothing
+                                    </a> 
+                                    (Reduces noise in elevation data for more accurate calculations)
+                                </label>
+                            </div>
                         </div>
-                        <div class="col-auto">
-                            <input type="number" 
-                                   class="form-control form-control-sm" 
-                                   style="width: 150px;"
-                                   id="officialElevationGain"
-                                   name="officialElevationGain" 
-                                   placeholder="e.g. 11000"
-                                   aria-label="Official elevation gain in feet">
-                        </div>
-                        <div class="col-auto">
-                            <span class="form-text text-muted">
-                                <small>feet</small>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="form-text mt-2">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Upload your GPX file (.gpx) and optionally provide the official elevation gain to normalize calculations
                     </div>
                 </form>
             </div>

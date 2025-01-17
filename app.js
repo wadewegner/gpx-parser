@@ -48,21 +48,24 @@ app.get('/', (req, res) => {
 
 app.post('/upload', upload.single('gpxFile'), async (req, res) => {
     try {
+        console.log('Smoothing parameter from form:', req.body.enableSmoothing);
         if (!req.file) {
             throw new Error('No file uploaded');
         }
         
         // Generate unique ID for this GPX content
         const gpxId = crypto.randomBytes(16).toString('hex');
+        const smoothingEnabled = req.body.enableSmoothing === 'on';
+        console.log('Storing smoothing setting:', smoothingEnabled);
         gpxStorage.set(gpxId, {
             content: req.file.buffer.toString('utf8'),
-            officialElevationGain: req.body.officialElevationGain || null
+            enableSmoothing: smoothingEnabled
         });
         
         // Process GPX file to extract waypoints
         const processor = new GpxProcessor(
             req.file.buffer.toString('utf8'),
-            req.body.officialElevationGain
+            smoothingEnabled
         );
         await processor.process();
         const waypoints = processor.getWaypoints();
@@ -83,6 +86,7 @@ app.post('/calculate', express.json(), async (req, res) => {
         const { gpxId, stations } = req.body;
         
         const gpxData = gpxStorage.get(gpxId);
+        console.log('Retrieved smoothing setting:', gpxData.enableSmoothing);
         if (!gpxData) {
             throw new Error('GPX content not found. Please try uploading the file again.');
         }
@@ -91,7 +95,10 @@ app.post('/calculate', express.json(), async (req, res) => {
         const sortedStations = stations.sort((a, b) => a.mile - b.mile);
         
         // Process GPX file
-        const processor = new GpxProcessor(gpxData.content, gpxData.officialElevationGain);
+        const processor = new GpxProcessor(
+            gpxData.content, 
+            gpxData.enableSmoothing
+        );
         await processor.process();
         
         // Get elevation profile data

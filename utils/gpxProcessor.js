@@ -1,14 +1,15 @@
 const fs = require('fs');
 const tj = require('@tmcw/togeojson');
 const { DOMParser } = require('xmldom');
+const simplify = require('@turf/simplify');
 
 class GpxProcessor {
-    constructor(gpxContent, officialElevationGain = null) {
+    constructor(gpxContent, enableSmoothing = false) {
+        console.log('GpxProcessor initialized with smoothing:', enableSmoothing);
         this.trackPoints = null;
         this.waypoints = [];
         this.gpxContent = gpxContent;
-        this.officialElevationGain = officialElevationGain ? parseInt(officialElevationGain) : null;
-        this.normalizationFactor = 1;
+        this.enableSmoothing = enableSmoothing;
     }
 
     async process() {
@@ -36,10 +37,10 @@ class GpxProcessor {
             throw new Error('No track points found in GPX file');
         }
         
+        // Calculate initial distances
         this.calculateDistances();
-        this.calculateNormalizationFactor();
-
-        // Extract waypoints if they exist
+        
+        // Extract and process waypoints first
         let waypoints = geoJson.features
             .filter(feature => feature.geometry.type === 'Point')
             .map(feature => ({
@@ -95,6 +96,13 @@ class GpxProcessor {
             
             // Sort all waypoints by distance
             this.waypoints.sort((a, b) => a.distance - b.distance);
+        }
+
+        // Now apply smoothing between waypoints if enabled
+        if (this.enableSmoothing) {
+            console.log('Smoothing enabled, points before:', this.trackPoints.length);
+            this.smoothTrackPointsBetweenWaypoints();
+            console.log('Points after smoothing:', this.trackPoints.length);
         }
 
         return this;
@@ -177,8 +185,8 @@ class GpxProcessor {
         }
 
         return {
-            elevationGain: Math.round(this.normalizeElevation(elevationGain * 3.28084)),
-            elevationLoss: Math.round(this.normalizeElevation(elevationLoss * 3.28084)),
+            elevationGain: Math.round(elevationGain * 3.28084),
+            elevationLoss: Math.round(elevationLoss * 3.28084),
             distance: endMile - startMile
         };
     }
@@ -186,7 +194,7 @@ class GpxProcessor {
     getElevationProfile() {
         return this.trackPoints.map(point => ({
             distance: point.distance,
-            elevation: this.normalizeElevation(point.elevation * 3.28084)  // Convert to feet and normalize
+            elevation: point.elevation * 3.28084
         }));
     }
 
@@ -194,22 +202,104 @@ class GpxProcessor {
         return this.waypoints;
     }
 
-    calculateNormalizationFactor() {
-        if (this.officialElevationGain) {
-            let totalGain = 0;
-            for (let i = 1; i < this.trackPoints.length; i++) {
-                const elevationDiff = this.trackPoints[i].elevation - this.trackPoints[i-1].elevation;
-                if (elevationDiff > 0) {
-                    totalGain += elevationDiff;
-                }
-            }
-            const calculatedTotalGain = totalGain * 3.28084; // Convert to feet
-            this.normalizationFactor = this.officialElevationGain / calculatedTotalGain;
+    smoothTrackPointsBetweenWaypoints() {
+        console.log('Starting smoothing between waypoints');
+        // If no waypoints, smooth the entire track with conservative tolerance
+        if (!this.waypoints.length) {
+            console.log('No waypoints found, smoothing entire track');
+            this.smoothSegment(0, this.totalDistance);
+            return;
+        }
+        
+        console.log(`Found ${this.waypoints.length} waypoints for segmented smoothing`);
+        // Smooth each segment between waypoints
+        let lastDistance = 0;
+        this.waypoints.forEach(waypoint => {
+            this.smoothSegment(lastDistance, waypoint.distance);
+            lastDistance = waypoint.distance;
+        });
+        
+        // Smooth final segment
+        if (lastDistance < this.totalDistance) {
+            console.log(`Smoothing final segment from ${lastDistance} to ${this.totalDistance}`);
+            this.smoothSegment(lastDistance, this.totalDistance);
         }
     }
 
-    normalizeElevation(value) {
-        return value * this.normalizationFactor;
+    smoothSegment(startMile, endMile) {
+        try {
+            const segmentPoints = this.trackPoints.filter(
+                p => p.distance >= startMile && p.distance <= endMile
+            );
+            
+            // Check if we have enough points to smooth
+            if (segmentPoints.length < 2) {
+                console.log(`Skipping segment ${startMile}-${endMile}: not enough points`);
+                return;
+            }
+            
+            console.log(`Smoothing segment ${startMile}-${endMile} with ${segmentPoints.length} points`);
+            
+            const line = {
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: segmentPoints.map(p => [p.longitude, p.latitude, p.elevation])
+                }
+            };
+            
+            // Validate coordinates
+            const validCoordinates = line.geometry.coordinates.every(coord => 
+                coord.length === 3 && 
+                !isNaN(coord[0]) && 
+                !isNaN(coord[1]) && 
+                !isNaN(coord[2])
+            );
+            
+            if (!validCoordinates) {
+                console.log('Invalid coordinates found in segment:', line.geometry.coordinates);
+                return;
+            }
+            
+            const smoothed = simplify(line, {
+                tolerance: 0.00015,
+                highQuality: true
+            });
+            
+            // Update just the points in this segment
+            const smoothedPoints = smoothed.geometry.coordinates.map((coord, idx) => ({
+                longitude: coord[0],
+                latitude: coord[1],
+                elevation: coord[2],
+                distance: segmentPoints[0].distance + 
+                    (idx / (smoothed.geometry.coordinates.length - 1)) * 
+                    (segmentPoints[segmentPoints.length - 1].distance - segmentPoints[0].distance)
+            }));
+            
+            // Replace segment points in trackPoints array
+            const startIndex = this.trackPoints.findIndex(p => p.distance >= startMile);
+            let endIndex = this.trackPoints.findIndex(p => p.distance > endMile);
+            if (endIndex === -1) {
+                // If we can't find a point beyond endMile, use the end of the array
+                endIndex = this.trackPoints.length;
+            }
+            
+            console.log(`Replacing points from index ${startIndex} to ${endIndex} with ${smoothedPoints.length} points`);
+            this.trackPoints.splice(
+                startIndex,
+                endIndex - startIndex,
+                ...smoothedPoints
+            );
+            
+            // Recalculate distances for the entire track to ensure consistency
+            this.calculateDistances();
+        } catch (error) {
+            console.error('Error smoothing segment:', error);
+            console.log('Start mile:', startMile);
+            console.log('End mile:', endMile);
+            // Continue processing without smoothing this segment
+            return;
+        }
     }
 }
 

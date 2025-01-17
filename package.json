@@ -17,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "@tmcw/togeojson": "^5.8.1",
+    "@turf/simplify": "^6.5.0",
     "bootstrap": "^5.3.2",
     "chart.js": "^4.4.1",
     "ejs": "^3.1.9",

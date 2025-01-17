@@ -1,16 +1,14 @@
 # Race Elevation Analyzer
 
-A web application that analyzes GPX files to calculate elevation profiles and segment statistics for race courses, particularly useful for trail running and ultramarathon events.
+An application to analyze elevation profiles and plan aid station strategies for races using GPX files.
 
 ## Features
 
 - Upload and parse GPX files
-- Automatically detect aid stations from GPX waypoints
-- Calculate elevation gain/loss between aid stations
-- Visualize elevation profile with interactive chart
-- Show aid station locations on the elevation profile
-- Calculate segment statistics between aid stations
-- Support for out-and-back courses with multiple aid station visits
+- Interactive elevation profile visualization
+- Aid station placement and analysis
+- Segment-by-segment elevation statistics
+- GPX elevation smoothing for more accurate calculations
 
 ## Prerequisites
 
@@ -68,3 +66,9 @@ A web application that analyzes GPX files to calculate elevation profiles and se
      - Elevation gain/loss per segment
 
 ## Project Structure 
+
+## Elevation Data Accuracy
+
+GPX files can sometimes contain noisy elevation data that leads to inflated elevation gain calculations. This tool uses smoothing to improve accuracy:
+
+**GPX Smoothing**: Reduces noise in the elevation data using the Ramer-Douglas-Peucker algorithm for more accurate elevation calculations. 

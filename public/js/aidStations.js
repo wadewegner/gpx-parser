@@ -119,6 +119,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayResults(data) {
         const resultsDiv = document.createElement('div');
         resultsDiv.className = 'card mb-4 results';
+        
+        // Calculate totals
+        const totals = data.segments.reduce((acc, segment) => ({
+            gain: acc.gain + segment.elevationGain,
+            loss: acc.loss + segment.elevationLoss,
+            distance: acc.distance + segment.distance
+        }), { gain: 0, loss: 0, distance: 0 });
+        
         resultsDiv.innerHTML = `
             <div class="card-body">
                 <h5 class="card-title">Elevation Profile</h5>
@@ -155,6 +163,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </td>
                             </tr>
                         `).join('')}
+                        <tr class="table-primary fw-bold">
+                            <td colspan="2">Total</td>
+                            <td>${totals.distance.toFixed(1)} miles</td>
+                            <td>${totals.gain} ft</td>
+                            <td>${totals.loss} ft</td>
+                            <td></td>
+                        </tr>
                     </tbody>
                 </table>
                 ${data.segments.some(s => s.error) ? `
