@@ -3,6 +3,7 @@ const path = require('path');
 const multer = require('multer');
 const GpxProcessor = require('./utils/gpxProcessor');
 const fs = require('fs');
+const crypto = require('crypto');
 const app = express();
 
 // Ensure uploads directory exists
@@ -20,8 +21,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 
 // File upload configuration
-const upload = multer({ 
-    dest: 'uploads/',
+const upload = multer({
+    storage: multer.memoryStorage(),
     fileFilter: (req, file, cb) => {
         if (file.mimetype === 'application/gpx+xml' || file.originalname.endsWith('.gpx')) {
             cb(null, true);
@@ -30,6 +31,9 @@ const upload = multer({
         }
     }
 });
+
+// In-memory storage for GPX content
+const gpxStorage = new Map();
 
 // Routes
 app.get('/', (req, res) => {
@@ -42,16 +46,20 @@ app.post('/upload', upload.single('gpxFile'), async (req, res) => {
             throw new Error('No file uploaded');
         }
         
+        // Generate unique ID for this GPX content
+        const gpxId = crypto.randomBytes(16).toString('hex');
+        gpxStorage.set(gpxId, req.file.buffer.toString('utf8'));
+        
         // Process GPX file to extract waypoints
-        const processor = new GpxProcessor(path.join(__dirname, 'uploads', req.file.filename));
+        const processor = new GpxProcessor(req.file.buffer.toString('utf8'));
         await processor.process();
         const waypoints = processor.getWaypoints();
         
         res.render('results', { 
             filename: req.file.originalname,
-            tempFilename: req.file.filename,
+            gpxId: gpxId,
             message: 'File uploaded successfully',
-            waypoints: JSON.stringify(waypoints)  // Pass waypoints to the view
+            waypoints: JSON.stringify(waypoints)
         });
     } catch (error) {
         res.render('index', { error: error.message });
@@ -60,20 +68,18 @@ app.post('/upload', upload.single('gpxFile'), async (req, res) => {
 
 app.post('/calculate', express.json(), async (req, res) => {
     try {
-        const { gpxFile, stations } = req.body;
+        const { gpxId, stations } = req.body;
+        
+        const gpxContent = gpxStorage.get(gpxId);
+        if (!gpxContent) {
+            throw new Error('GPX content not found. Please try uploading the file again.');
+        }
         
         // Sort stations by mile marker
         const sortedStations = stations.sort((a, b) => a.mile - b.mile);
         
-        const gpxFilePath = path.join(__dirname, 'uploads', gpxFile);
-        
-        // Check if file exists
-        if (!fs.existsSync(gpxFilePath)) {
-            throw new Error(`GPX file not found at ${gpxFilePath}`);
-        }
-        
         // Process GPX file
-        const processor = new GpxProcessor(gpxFilePath);
+        const processor = new GpxProcessor(gpxContent);
         await processor.process();
         
         // Get elevation profile data
@@ -141,6 +147,7 @@ app.use((error, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const HOST = '0.0.0.0';  // Allow connections from all network interfaces
+app.listen(PORT, HOST, () => {
     console.log(`Server is running on port ${PORT}`);
 }); 

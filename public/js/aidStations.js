@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    gpxFile: document.querySelector('input[name="tempGpxFile"]').value,
+                    gpxId: document.querySelector('input[name="gpxId"]').value,
                     stations
                 })
             });

@@ -3,16 +3,14 @@ const tj = require('@tmcw/togeojson');
 const { DOMParser } = require('xmldom');
 
 class GpxProcessor {
-    constructor(gpxFilePath) {
-        this.gpxFilePath = gpxFilePath;
+    constructor(gpxContent) {
         this.trackPoints = null;
         this.waypoints = [];
+        this.gpxContent = gpxContent;
     }
 
     async process() {
-        const gpxContent = await fs.promises.readFile(this.gpxFilePath, 'utf8');
-        
-        const gpxDoc = new DOMParser().parseFromString(gpxContent, 'text/xml');
+        const gpxDoc = new DOMParser().parseFromString(this.gpxContent, 'text/xml');
         
         const geoJson = tj.gpx(gpxDoc);
         
