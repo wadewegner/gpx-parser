@@ -134,20 +134,35 @@ document.addEventListener('DOMContentLoaded', function() {
                             <th>Distance</th>
                             <th>Elevation Gain</th>
                             <th>Elevation Loss</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${data.segments.map(segment => `
-                            <tr>
+                            <tr ${segment.error ? 'class="table-warning"' : ''}>
                                 <td>${segment.start}</td>
                                 <td>${segment.end}</td>
                                 <td>${segment.distance.toFixed(1)} miles</td>
                                 <td>${segment.elevationGain} ft</td>
                                 <td>${segment.elevationLoss} ft</td>
+                                <td>
+                                    ${segment.error ? `
+                                        <span class="text-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            ${segment.error}
+                                        </span>
+                                    ` : ''}
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
+                ${data.segments.some(s => s.error) ? `
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Some segments have missing or invalid track data. These segments show zero elevation change.
+                    </div>
+                ` : ''}
             </div>
         `;
         

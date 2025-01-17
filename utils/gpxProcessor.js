@@ -144,14 +144,24 @@ class GpxProcessor {
 
     calculateSegmentStats(startMile, endMile) {
         if (!this.trackPoints || !this.trackPoints.length) {
-            throw new Error('No track points available for segment calculation');
+            return {
+                elevationGain: 0,
+                elevationLoss: 0,
+                distance: endMile - startMile,
+                error: 'No track points available for this segment'
+            };
         }
         
         const startPoints = this.trackPoints.filter(p => p.distance >= startMile);
         const endPoints = startPoints.filter(p => p.distance <= endMile);
         
         if (!endPoints.length) {
-            throw new Error(`No track points found between miles ${startMile} and ${endMile}`);
+            return {
+                elevationGain: 0,
+                elevationLoss: 0,
+                distance: endMile - startMile,
+                error: `Missing track data between miles ${startMile.toFixed(1)} and ${endMile.toFixed(1)}`
+            };
         }
         
         let elevationGain = 0;
