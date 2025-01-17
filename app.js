@@ -55,13 +55,10 @@ app.post('/calculate', express.json(), async (req, res) => {
     try {
         const { gpxFile, stations } = req.body;
         
-        console.log('Received request to calculate:', { gpxFile, stations });
-        
         // Sort stations by mile marker
         const sortedStations = stations.sort((a, b) => a.mile - b.mile);
         
         const gpxFilePath = path.join(__dirname, 'uploads', gpxFile);
-        console.log('Processing GPX file:', gpxFilePath);
         
         // Check if file exists
         if (!fs.existsSync(gpxFilePath)) {
@@ -71,6 +68,9 @@ app.post('/calculate', express.json(), async (req, res) => {
         // Process GPX file
         const processor = new GpxProcessor(gpxFilePath);
         await processor.process();
+        
+        // Get elevation profile data
+        const elevationProfile = processor.getElevationProfile();
         
         // Calculate segments between stations
         const segments = [];
@@ -113,9 +113,16 @@ app.post('/calculate', express.json(), async (req, res) => {
             });
         }
         
-        res.json({ segments });
+        res.json({ 
+            segments,
+            elevationProfile,
+            aidStations: sortedStations.map(station => ({
+                name: station.name,
+                mile: station.mile,
+                elevation: elevationProfile.find(p => Math.abs(p.distance - station.mile) < 0.1)?.elevation || 0
+            }))
+        });
     } catch (error) {
-        console.error('Error processing GPX file:', error);
         res.status(500).json({ error: error.message });
     }
 });

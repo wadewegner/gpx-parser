@@ -10,14 +10,10 @@ class GpxProcessor {
 
     async process() {
         const gpxContent = await fs.promises.readFile(this.gpxFilePath, 'utf8');
-        console.log('First 500 characters of GPX content:', gpxContent.substring(0, 500));
         
         const gpxDoc = new DOMParser().parseFromString(gpxContent, 'text/xml');
-        console.log('XML parsed successfully');
         
         const geoJson = tj.gpx(gpxDoc);
-        
-        console.log('GeoJSON:', JSON.stringify(geoJson, null, 2));
         
         if (!geoJson.features || !geoJson.features.length) {
             throw new Error('No track data found in GPX file');
@@ -32,7 +28,6 @@ class GpxProcessor {
             longitude: coord[0],
             latitude: coord[1],
             elevation: coord[2],
-            // We'll calculate distance later
             distance: 0
         }));
 
@@ -40,8 +35,6 @@ class GpxProcessor {
             throw new Error('No track points found in GPX file');
         }
         
-        console.log(`Processed ${this.trackPoints.length} track points`);
-
         this.calculateDistances();
         return this;
     }
@@ -56,7 +49,6 @@ class GpxProcessor {
             const prev = this.trackPoints[i - 1];
             const curr = this.trackPoints[i];
             
-            // Calculate distance between points using Haversine formula
             const distance = this.calculateHaversineDistance(
                 prev.latitude, prev.longitude,
                 curr.latitude, curr.longitude
@@ -65,8 +57,7 @@ class GpxProcessor {
             totalDistance += distance;
             curr.distance = totalDistance;
         }
-        console.log(`Total distance calculated: ${totalDistance} miles`);
-        this.totalDistance = totalDistance;  // Store total distance
+        this.totalDistance = totalDistance;
     }
 
     getTotalDistance() {
@@ -114,17 +105,18 @@ class GpxProcessor {
             }
         }
 
-        console.log(`Segment stats for ${startMile} to ${endMile}:`, {
+        return {
             elevationGain: Math.round(elevationGain * 3.28084),
             elevationLoss: Math.round(elevationLoss * 3.28084),
             distance: endMile - startMile
-        });
-
-        return {
-            elevationGain: Math.round(elevationGain * 3.28084), // Convert to feet
-            elevationLoss: Math.round(elevationLoss * 3.28084), // Convert to feet
-            distance: endMile - startMile
         };
+    }
+
+    getElevationProfile() {
+        return this.trackPoints.map(point => ({
+            distance: point.distance,
+            elevation: point.elevation * 3.28084  // Convert to feet
+        }));
     }
 }
 
