@@ -42,6 +42,7 @@ An application to analyze elevation profiles and plan aid station strategies for
 
 1. **Upload GPX File**
    - Click "Choose File" and select your GPX file
+   - GPX smoothing is enabled by default for more accurate elevation calculations
    - Click "Upload" to process the file
    - If your GPX file contains waypoints for aid stations, they will be automatically populated
 
